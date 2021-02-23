@@ -1,0 +1,649 @@
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" 
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <!-- http://wixtoolset.org/documentation/manual/v3/xsd/wix/product.html -->
+  <Product Id="2845279F-0666-4BD7-A44C-11079261E735" 
+           UpgradeCode="6772a9a3-c09f-4326-b2e0-39f80190cc63"
+           Name = "Election'22 (Machine - MSI)"
+           Version="1.0.0.0"
+           Manufacturer="Zsolt Ardai"
+           Language="1033">
+    <!-- Only run this installer on Windows 7 or up (or if it"s already installed, I guess) -->
+    <!-- <Condition Message="This application is only supported on Windows 7 or higher.">
+      <![CDATA[Installed OR (VersionNT >= 601)]]>
+    </Condition> -->
+    <!-- http://wixtoolset.org/documentation/manual/v3/xsd/wix/package.html -->
+    <Package InstallerVersion="405"
+             Compressed="yes"
+             Comments="Windows Installer Package"
+             Platform="x86"/>
+    <!-- Don't allow downgrades -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A later version of this product is already installed. Setup will now exit."/>
+    <!-- This will hide our Uninstall entry in Apps & Features. We doing this so
+    we can write our own which we can better control. -->
+    <Property Id="ARPSYSTEMCOMPONENT" Value="1" />
+    <!-- While the MSI package is hidden in Apps & Features, it can still be queried
+    via PowerShell and other means. To differentiate we give the public entry a slightly
+    different name to make admins life easier.  -->
+    <Property Id="VisibleProductName" Value="Election'22 (Machine)" />
+    <!-- Signals Single Package Authoring. This pacakge can pe installed perMachine
+    or perUser. The mode is determined by the property below. -->
+    <Property Id="ALLUSERS" Secure="yes" Value="2" />
+    <!-- Tells the package to install perUser or perMachine. In case of perUser, all
+    files will be redirected to the user profile and all registry entries to HKCU. -->
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="0" />
+    <!-- Overides the default install mode. It solves a problem where
+    individual packaged files that have the same version as in previous
+    installed App version will be deleted if the files are in use during
+    this upgrade. Unfortunately this causes an ICE 40 warning during linking. -->
+    <Property Id="REINSTALLMODE" Value="emus" />
+    <!-- Overrides the default reboot behavior if files are in use during the upgrade.
+     This way no unpxecpted reboot will happpen.-->
+    <Property Id="REBOOT" Value="ReallySuppress" />
+    <!-- A property that holds the intall path and is needed to delete all files on
+    uninstall, even if they are not wriiten as part of this MSI. The value comes from a 
+    registry we set on install.-->
+    <Property Id="INSTALLLEVEL" Value="2" />
+    <!-- Allows to customize the Windows user group that gets access rights on
+    the install folder in cas the auto-updater is installed. User that run the App
+    must be part of that user group to be able to auto-update. -->
+    <Property Id="UPDATERUSERGROUP" Value="Users" />
+    <!-- A property to define whether the auto-updater is enabled when the
+    feature gets installed. This way the update can be installed but also be disabled
+    by overwriting the default value.  -->
+    <Property Id="AUTOUPDATEENABLED" Value="1" />
+    <!-- Necessary registry search to find the install path which is used by the
+    PurgeOnUninstall action. Since this package can be installed perUser or perMachine,
+    we have to look in both places. First successful search wins. -->
+    <Property Id="INSTALLPATH">
+      <RegistrySearch Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq"
+                      Root="HKCU" 
+                      Type="raw"
+                      Id="INSTALLPATH_REGSEARCH_HKCU"
+                      Name="InstallPath"
+                      Win64="no"/>
+      <RegistrySearch Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq"
+                      Root="HKLM" 
+                      Type="raw"
+                      Id="INSTALLPATH_REGSEARCH_HKLM"
+                      Name="InstallPath"
+                      Win64="no"/>
+    </Property>
+    <!-- Lets change the product name depending on the perUser installMode. 
+    This way the user and admins can see in which scope the MSI was installed. -->
+    <SetProperty Action="SetVisibleProductName" Id="VisibleProductName" Sequence="both" Before="AppSearch"  Value="Election'22 (User)">
+      <![CDATA[MSIINSTALLPERUSER = "1"]]>
+    </SetProperty>
+    <!-- Again we give thee MSI generaten entry a slightly different name to help 
+    differentiate between the public one and the invisible one. -->
+    <SetProperty Action="SetProductName" Id="ProductName" Sequence="both" Before="AppSearch"  Value="Election'22 (User - MSI)">
+      <![CDATA[MSIINSTALLPERUSER = "1"]]>
+    </SetProperty>
+
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
+
+    <UI Id="UserInterface">
+      <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+      <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+      <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+      <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+      <Property Id="WixUI_Mode" Value="FeatureTree" />
+      <DialogRef Id="ErrorDlg" />
+      <DialogRef Id="FatalError" />
+      <DialogRef Id="FilesInUse" />
+      <DialogRef Id="MsiRMFilesInUse" />
+      <DialogRef Id="PrepareDlg" />
+      <DialogRef Id="ProgressDlg" />
+      <DialogRef Id="ResumeDlg" />
+      <DialogRef Id="UserExit" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg">NOT Installed</Publish>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed AND PATCH</Publish>
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1">Installed</Publish>
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">NOT Installed</Publish>
+      <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="CustomizeDlg" Order="1">NOT Installed OR WixUI_InstallMode = "Change"</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed AND NOT PATCH</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="3">Installed AND PATCH</Publish>
+      <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+      <Publish Dialog="MaintenanceTypeDlg" Control="ChangeButton" Event="NewDialog" Value="CustomizeDlg">1</Publish>
+      <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+      <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+      <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+    </UI>
+    <UIRef Id="WixUI_Common" />
+
+
+    <!-- Step 2: Add files and directories -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+       <!-- Installation files to %PROGRAMFILES% -->
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="Election'22">
+          <Directory Id="__2c59aa02_bb8d_4ea7_81ad_e8c6049da8c8" Name="app-1.0.0">
+            <Directory Id="_locales_0dd04949_8f93_462e_b091_8d8687844327" Name="locales">
+              <Component Id="_locales_am.pak_23b25a94_3817_4d06_af62_050ca5a96952" Guid="cced7903-3de2-464b-a416-83dd938d8659" Win64="no">
+                <File Name="am.pak" Id="_locales_am.pak_23b25a94_3817_4d06_af62_050ca5a96952" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\am.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ar.pak_14a7489c_4e91_4846_8d8c_b1e0345f9b70" Guid="9b0cca13-bb73-4713-aa6a-bcdc0254d211" Win64="no">
+                <File Name="ar.pak" Id="_locales_ar.pak_14a7489c_4e91_4846_8d8c_b1e0345f9b70" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ar.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_bg.pak_a6ef7902_333d_4bf1_b8dc_bd2a9b71098e" Guid="39c7eac6-aa19-4f20-99b0-1a0ca6233b38" Win64="no">
+                <File Name="bg.pak" Id="_locales_bg.pak_a6ef7902_333d_4bf1_b8dc_bd2a9b71098e" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\bg.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_bn.pak_3ee2b310_f92a_4302_aa56_fd9c8ffb6094" Guid="cb49cd7f-a878-4298-9fa7-66ac3e944381" Win64="no">
+                <File Name="bn.pak" Id="_locales_bn.pak_3ee2b310_f92a_4302_aa56_fd9c8ffb6094" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\bn.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ca.pak_dd0243c4_0e44_41f4_86d3_de00493d73a0" Guid="98c2c421-1d3f-402a-89cd-4c716697e12c" Win64="no">
+                <File Name="ca.pak" Id="_locales_ca.pak_dd0243c4_0e44_41f4_86d3_de00493d73a0" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ca.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_cs.pak_4ed93875_5e59_426e_acc6_39aea5b5d485" Guid="30542538-5f34-4e15-8b7e-c6a4d50c8efb" Win64="no">
+                <File Name="cs.pak" Id="_locales_cs.pak_4ed93875_5e59_426e_acc6_39aea5b5d485" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\cs.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_da.pak_e5a87a42_d461_4b65_aedc_8eb045105cf4" Guid="01e5bac3-7ac5-48c6-bf90-5fa0e7b4d8b1" Win64="no">
+                <File Name="da.pak" Id="_locales_da.pak_e5a87a42_d461_4b65_aedc_8eb045105cf4" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\da.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_de.pak_39513854_dd7e_48d6_9cab_7796e57a7b0b" Guid="704b5978-c904-49d6-8376-164adef5cae7" Win64="no">
+                <File Name="de.pak" Id="_locales_de.pak_39513854_dd7e_48d6_9cab_7796e57a7b0b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\de.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_el.pak_747c6cee_6dc3_4725_95d8_f9c38bb02a1b" Guid="7dae04a8-9819-4c8d-929f-4f967f96ae64" Win64="no">
+                <File Name="el.pak" Id="_locales_el.pak_747c6cee_6dc3_4725_95d8_f9c38bb02a1b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\el.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_en_GB.pak_efaa7280_e7c4_45c3_86a5_c71ce3114717" Guid="ac6750f2-0dd3-431d-be60-32bdbffc4624" Win64="no">
+                <File Name="en-GB.pak" Id="_locales_en_GB.pak_efaa7280_e7c4_45c3_86a5_c71ce3114717" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\en-GB.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_en_US.pak_feba3caa_0154_4f4b_9601_e6cb8ecb8cf5" Guid="0e7ae12f-4c19-46e6-9220-344e600d6a5a" Win64="no">
+                <File Name="en-US.pak" Id="_locales_en_US.pak_feba3caa_0154_4f4b_9601_e6cb8ecb8cf5" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\en-US.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_es_419.pak_53262151_81c6_4bea_b70a_c8f653eda56c" Guid="65e52308-e8fb-432b-af27-fc02879ff54e" Win64="no">
+                <File Name="es-419.pak" Id="_locales_es_419.pak_53262151_81c6_4bea_b70a_c8f653eda56c" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\es-419.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_es.pak_d0567188_6c9c_45d8_bb88_199fafc15e3b" Guid="27ca2dfb-7601-451d-959e-78b287c7ccb0" Win64="no">
+                <File Name="es.pak" Id="_locales_es.pak_d0567188_6c9c_45d8_bb88_199fafc15e3b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\es.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_et.pak_a07e1b96_914a_4d89_b7b0_baedb0d42fe3" Guid="54ef6626-ccb7-4e26-a9a1-9ed538c5af30" Win64="no">
+                <File Name="et.pak" Id="_locales_et.pak_a07e1b96_914a_4d89_b7b0_baedb0d42fe3" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\et.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fa.pak_c188c1f0_feac_4889_9c09_ec3ae8d8a478" Guid="17505289-cc93-4d28-8326-14eabe42fc38" Win64="no">
+                <File Name="fa.pak" Id="_locales_fa.pak_c188c1f0_feac_4889_9c09_ec3ae8d8a478" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\fa.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fi.pak_2b3aa969_3974_464d_a327_0b6b574065d7" Guid="7ae42a0f-8b2d-4ebb-ae1e-d4a994a194b0" Win64="no">
+                <File Name="fi.pak" Id="_locales_fi.pak_2b3aa969_3974_464d_a327_0b6b574065d7" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\fi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fil.pak_784c5a32_18f9_4bb4_afa5_c2290060340e" Guid="b091dce3-a550-46ff-8f33-55b55bdc43bf" Win64="no">
+                <File Name="fil.pak" Id="_locales_fil.pak_784c5a32_18f9_4bb4_afa5_c2290060340e" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\fil.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_fr.pak_88a5f073_d65f_4390_b437_b48918fb3dcb" Guid="f2de61c0-169b-4e14-9d05-5dc0b10dd8c5" Win64="no">
+                <File Name="fr.pak" Id="_locales_fr.pak_88a5f073_d65f_4390_b437_b48918fb3dcb" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\fr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_gu.pak_5c74d44b_1238_4ee7_ab31_9060bd5cdb1f" Guid="f71ff54c-441d-4a37-82da-7a7e2d2fad51" Win64="no">
+                <File Name="gu.pak" Id="_locales_gu.pak_5c74d44b_1238_4ee7_ab31_9060bd5cdb1f" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\gu.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_he.pak_7d027d9b_d604_467b_8035_c8e414881cd5" Guid="29cf7a00-0bb3-49fd-ae32-79e7aa066bfe" Win64="no">
+                <File Name="he.pak" Id="_locales_he.pak_7d027d9b_d604_467b_8035_c8e414881cd5" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\he.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_hi.pak_e29cb9b1_d679_4ad9_973d_4c1851b3d457" Guid="2f7896f1-2b3c-40cd-ac28-2cc51459da56" Win64="no">
+                <File Name="hi.pak" Id="_locales_hi.pak_e29cb9b1_d679_4ad9_973d_4c1851b3d457" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\hi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_hr.pak_020a5d5c_749e_43d5_af32_b8081072624b" Guid="5251d7ee-eda9-4c3d-a4c9-512dc3f6d75e" Win64="no">
+                <File Name="hr.pak" Id="_locales_hr.pak_020a5d5c_749e_43d5_af32_b8081072624b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\hr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_hu.pak_58572ae6_db15_4475_a61e_e75c56e195b3" Guid="79274bc3-d3c3-49f0-976d-1f17d36af2cb" Win64="no">
+                <File Name="hu.pak" Id="_locales_hu.pak_58572ae6_db15_4475_a61e_e75c56e195b3" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\hu.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_id.pak_b2c2a43e_a035_44cf_9c40_913aeadbadf5" Guid="70a762a1-835e-4816-9871-88a7b95cbb0a" Win64="no">
+                <File Name="id.pak" Id="_locales_id.pak_b2c2a43e_a035_44cf_9c40_913aeadbadf5" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\id.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_it.pak_56eafd82_75a0_4b58_851a_c1e3b8a7ea93" Guid="31ebbfe8-359c-44ed-b2b1-ea0ce6b6d618" Win64="no">
+                <File Name="it.pak" Id="_locales_it.pak_56eafd82_75a0_4b58_851a_c1e3b8a7ea93" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\it.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ja.pak_1f0d3e27_aff8_468e_bd59_00670047617d" Guid="129570b7-0e80-4997-b98e-06f20bc11ced" Win64="no">
+                <File Name="ja.pak" Id="_locales_ja.pak_1f0d3e27_aff8_468e_bd59_00670047617d" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ja.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_kn.pak_a1fb3e19_95bd_4ae2_b82a_e5f47c96b4fe" Guid="4c6ca4e4-6af1-4d04-a92e-d87b4b606a46" Win64="no">
+                <File Name="kn.pak" Id="_locales_kn.pak_a1fb3e19_95bd_4ae2_b82a_e5f47c96b4fe" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\kn.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ko.pak_cffb4db3_9a8b_4022_a8dd_4a2d22e5e72b" Guid="ea118877-41b4-4e34-9bec-1876eab6169f" Win64="no">
+                <File Name="ko.pak" Id="_locales_ko.pak_cffb4db3_9a8b_4022_a8dd_4a2d22e5e72b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ko.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_lt.pak_9bd21eb9_3f03_41fa_adf5_e6763eb16f1a" Guid="339d14fa-6f42-498a-ad10-5de324e3df30" Win64="no">
+                <File Name="lt.pak" Id="_locales_lt.pak_9bd21eb9_3f03_41fa_adf5_e6763eb16f1a" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\lt.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_lv.pak_0c5241af_ce7f_419a_9e69_625ec24cc6fe" Guid="16a21d94-88f6-4a18-9e07-bd7faf29aa92" Win64="no">
+                <File Name="lv.pak" Id="_locales_lv.pak_0c5241af_ce7f_419a_9e69_625ec24cc6fe" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\lv.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ml.pak_bb1a85b0_0a32_4756_8c3e_2a104a319ee5" Guid="5093b8d4-2076-4c50-a285-ec45d0d6f611" Win64="no">
+                <File Name="ml.pak" Id="_locales_ml.pak_bb1a85b0_0a32_4756_8c3e_2a104a319ee5" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ml.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_mr.pak_74247a27_1349_4f6f_a43f_8079ceccb01d" Guid="c3f02a38-38dc-4eb7-9193-52482b45965e" Win64="no">
+                <File Name="mr.pak" Id="_locales_mr.pak_74247a27_1349_4f6f_a43f_8079ceccb01d" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\mr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ms.pak_8232281c_290a_4745_bb08_9d1279dc036d" Guid="23e65475-e5c4-469d-93e6-527c0234b561" Win64="no">
+                <File Name="ms.pak" Id="_locales_ms.pak_8232281c_290a_4745_bb08_9d1279dc036d" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ms.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_nb.pak_91961c52_67f0_407b_bd7d_7a001cff2238" Guid="c1765b1b-44dc-48b3-b72f-bc7dd2e826e8" Win64="no">
+                <File Name="nb.pak" Id="_locales_nb.pak_91961c52_67f0_407b_bd7d_7a001cff2238" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\nb.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_nl.pak_262cb7fd_35d9_48f9_8e00_d7903f54955d" Guid="7007de47-30b7-4629-8c65-08ff57a53fc0" Win64="no">
+                <File Name="nl.pak" Id="_locales_nl.pak_262cb7fd_35d9_48f9_8e00_d7903f54955d" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\nl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_pl.pak_9ab3a9a6_9bbf_4fd8_80eb_ce2105cceddf" Guid="b56d4694-b857-493d-b649-fd8f97ec0442" Win64="no">
+                <File Name="pl.pak" Id="_locales_pl.pak_9ab3a9a6_9bbf_4fd8_80eb_ce2105cceddf" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\pl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_pt_BR.pak_3087046d_29d0_47d2_b6d0_bb342b6ee550" Guid="847089b4-028c-404e-900b-2e4c6247350c" Win64="no">
+                <File Name="pt-BR.pak" Id="_locales_pt_BR.pak_3087046d_29d0_47d2_b6d0_bb342b6ee550" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\pt-BR.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_pt_PT.pak_ee4d61ca_788c_4829_bd91_b61397b0080f" Guid="fc451a24-8509-4772-ab76-cd7208c47854" Win64="no">
+                <File Name="pt-PT.pak" Id="_locales_pt_PT.pak_ee4d61ca_788c_4829_bd91_b61397b0080f" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\pt-PT.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ro.pak_7a22b4aa_2acd_4e4e_824b_ee4c1369a77b" Guid="384227d7-a71e-4c47-85e8-af38978e21f7" Win64="no">
+                <File Name="ro.pak" Id="_locales_ro.pak_7a22b4aa_2acd_4e4e_824b_ee4c1369a77b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ro.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ru.pak_ff327c3d_8a2d_4f0e_8343_8fc77d39a846" Guid="ea102491-4136-49bc-8e65-5da963f700a4" Win64="no">
+                <File Name="ru.pak" Id="_locales_ru.pak_ff327c3d_8a2d_4f0e_8343_8fc77d39a846" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ru.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sk.pak_92158655_75a8_4821_bd6b_d27ac3258e2b" Guid="997b5180-0a92-44fa-93b3-ea97f77cca69" Win64="no">
+                <File Name="sk.pak" Id="_locales_sk.pak_92158655_75a8_4821_bd6b_d27ac3258e2b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\sk.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sl.pak_3c30d5bc_02b7_48c8_90d2_8ee5ac15303a" Guid="addb2828-1ec3-495f-9a20-843dd19c5481" Win64="no">
+                <File Name="sl.pak" Id="_locales_sl.pak_3c30d5bc_02b7_48c8_90d2_8ee5ac15303a" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\sl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sr.pak_cccc7947_cff0_4441_88b2_246a61e97289" Guid="cc089949-7b74-4893-ba3e-ccc59c55c99d" Win64="no">
+                <File Name="sr.pak" Id="_locales_sr.pak_cccc7947_cff0_4441_88b2_246a61e97289" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\sr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sv.pak_0481e7ed_eb24_4907_a324_0ab40f5befe0" Guid="b95ccaa5-b29d-4b61-a797-7657b136c147" Win64="no">
+                <File Name="sv.pak" Id="_locales_sv.pak_0481e7ed_eb24_4907_a324_0ab40f5befe0" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\sv.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_sw.pak_d8c1dbc1_28b8_4033_83e9_7846d2a33338" Guid="e14a3023-9905-43d6-8ef0-de9fa65126e8" Win64="no">
+                <File Name="sw.pak" Id="_locales_sw.pak_d8c1dbc1_28b8_4033_83e9_7846d2a33338" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\sw.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_ta.pak_11784e16_296f_4eea_8484_2c2e31e1e276" Guid="2e219336-2797-47aa-ac72-15ff36167d71" Win64="no">
+                <File Name="ta.pak" Id="_locales_ta.pak_11784e16_296f_4eea_8484_2c2e31e1e276" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\ta.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_te.pak_1aa75d0f_16fb_478e_96f4_6c05e9634103" Guid="0c249988-f3fd-4e14-9e23-e8fad55f6d1a" Win64="no">
+                <File Name="te.pak" Id="_locales_te.pak_1aa75d0f_16fb_478e_96f4_6c05e9634103" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\te.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_th.pak_e3d5f2ee_290c_4be3_aecb_4110f3aedde4" Guid="8977d267-ab7c-45a3-a5b0-3521a0144d96" Win64="no">
+                <File Name="th.pak" Id="_locales_th.pak_e3d5f2ee_290c_4be3_aecb_4110f3aedde4" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\th.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_tr.pak_bec8d14d_d66d_4f4e_a8d6_64a5734570f7" Guid="96f12781-ff8d-4e84-9f7e-f4baa5e32aa7" Win64="no">
+                <File Name="tr.pak" Id="_locales_tr.pak_bec8d14d_d66d_4f4e_a8d6_64a5734570f7" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\tr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_uk.pak_71495e4a_81d0_4e12_95e6_58df70086aaa" Guid="413ebb8d-0d46-41ea-98e7-dfb8d75238cb" Win64="no">
+                <File Name="uk.pak" Id="_locales_uk.pak_71495e4a_81d0_4e12_95e6_58df70086aaa" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\uk.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_vi.pak_a16c9205_38dc_4079_8e12_4292d0ac2160" Guid="a357aa61-6593-4bce-8801-3170031965c8" Win64="no">
+                <File Name="vi.pak" Id="_locales_vi.pak_a16c9205_38dc_4079_8e12_4292d0ac2160" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\vi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_zh_CN.pak_a74c68f2_ae0e_452d_92c7_82b1443d98b2" Guid="67109c0b-2396-46b5-b636-ab3a0da60e2c" Win64="no">
+                <File Name="zh-CN.pak" Id="_locales_zh_CN.pak_a74c68f2_ae0e_452d_92c7_82b1443d98b2" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\zh-CN.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_locales_zh_TW.pak_e2253192_d1e9_4721_a0bf_e3655562ac75" Guid="3c9e082a-9dd3-4826-9e79-5acdd4a682d7" Win64="no">
+                <File Name="zh-TW.pak" Id="_locales_zh_TW.pak_e2253192_d1e9_4721_a0bf_e3655562ac75" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\locales\zh-TW.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+            </Directory>
+            <Directory Id="_resources_0af86d22_87b1_4548_bcef_17c07fabebed" Name="resources">
+              <Directory Id="_resources_app_f37557ba_f1e4_4a15_9365_5135ef406d82" Name="app">
+                <Directory Id="_resources_app_data_c101b4d1_55fd_4d31_b8b8_c582c7383871" Name="data">
+                  <Component Id="_resources_app_data_data.json_7d3cfdc1_39b5_413d_af80_8a0c2a72dd78" Guid="dfdf0f0b-069e-4bed-baf8-516efb56061a" Win64="no">
+                    <File Name="data.json" Id="_resources_app_data_data.json_7d3cfdc1_39b5_413d_af80_8a0c2a72dd78" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\data\data.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_data_districts.js_784788e8_4c62_4c37_9966_ed1016f9c50f" Guid="00a5b3bd-92e4-4e9c-9476-e74bb78bd3b9" Win64="no">
+                    <File Name="districts.js" Id="_resources_app_data_districts.js_784788e8_4c62_4c37_9966_ed1016f9c50f" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\data\districts.js" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                </Directory>
+                <Directory Id="_resources_app_img_8a1766f1_e13a_4210_8c3d_31abcc9ebf2a" Name="img">
+                  <Component Id="_resources_app_img_0.png_7ce70cdc_40d0_407e_b879_f683c82ce634" Guid="11e72fdf-9eac-4abc-ac6d-6d32505b7085" Win64="no">
+                    <File Name="0.png" Id="_resources_app_img_0.png_7ce70cdc_40d0_407e_b879_f683c82ce634" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\0.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_0_selected.png_3210a052_68f3_44ac_9c2b_d5d856e45f07" Guid="a8d62029-56ab-4739-b023-6c5b0f8b624b" Win64="no">
+                    <File Name="0_selected.png" Id="_resources_app_img_0_selected.png_3210a052_68f3_44ac_9c2b_d5d856e45f07" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\0_selected.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_1.png_9701407a_9989_4315_b50d_642d8bc5321d" Guid="da84cf5a-ac6d-4d68-bda1-5215d16e8ea4" Win64="no">
+                    <File Name="1.png" Id="_resources_app_img_1.png_9701407a_9989_4315_b50d_642d8bc5321d" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\1.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_1_selected.png_291400a6_d277_460a_b8a7_94edd495df1c" Guid="9bb9debf-f169-40dd-a830-e0db390177ee" Win64="no">
+                    <File Name="1_selected.png" Id="_resources_app_img_1_selected.png_291400a6_d277_460a_b8a7_94edd495df1c" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\1_selected.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_2.png_e9e0febd_6e56_41f4_9154_73c2ae224c2b" Guid="0201dabf-943b-4db6-84db-fa9358174947" Win64="no">
+                    <File Name="2.png" Id="_resources_app_img_2.png_e9e0febd_6e56_41f4_9154_73c2ae224c2b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\2.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_2_selected.png_983c8c16_85ec_4459_a3a8_54036980b93b" Guid="04f2fb13-6862-41b4-8d20-58c2c62fe48a" Win64="no">
+                    <File Name="2_selected.png" Id="_resources_app_img_2_selected.png_983c8c16_85ec_4459_a3a8_54036980b93b" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\2_selected.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_3.png_fba3b4ef_69bf_471c_9675_86a1bc5c93aa" Guid="46de979c-9dc2-4344-a6fa-f3888a064ebf" Win64="no">
+                    <File Name="3.png" Id="_resources_app_img_3.png_fba3b4ef_69bf_471c_9675_86a1bc5c93aa" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\3.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_3_selected.png_be0b293a_b8fe_4f74_b178_ecfb473b7c38" Guid="086eaba2-9078-45a6-9f52-5a3517b76d2c" Win64="no">
+                    <File Name="3_selected.png" Id="_resources_app_img_3_selected.png_be0b293a_b8fe_4f74_b178_ecfb473b7c38" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\3_selected.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_icon.jpg_b45a29f4_ef25_46f6_95ce_53b244944c9d" Guid="1aab7cb5-6c25-4342-b2f2-d62de78025b0" Win64="no">
+                    <File Name="icon.jpg" Id="_resources_app_img_icon.jpg_b45a29f4_ef25_46f6_95ce_53b244944c9d" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\icon.jpg" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                  <Component Id="_resources_app_img_icon.png_5f80db2f_12e7_491b_9f54_33ad1658a0e8" Guid="3da79129-f92b-4555-b83b-55838676a99f" Win64="no">
+                    <File Name="icon.png" Id="_resources_app_img_icon.png_5f80db2f_12e7_491b_9f54_33ad1658a0e8" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\img\icon.png" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                </Directory>
+                <Directory Id="_resources_app_music_8a43d9d3_0e60_46af_9255_6cd8bc2bae52" Name="music">
+                  <Component Id="_resources_app_music_music.mp3_c34e6dee_39f0_4c3f_8eed_d4eaecc539ed" Guid="785cfda0-d03f-41c5-b699-24639c1bcc04" Win64="no">
+                    <File Name="music.mp3" Id="_resources_app_music_music.mp3_c34e6dee_39f0_4c3f_8eed_d4eaecc539ed" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\music\music.mp3" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                </Directory>
+                <Directory Id="_resources_app_node_modules_2e09b1af_9659_4bd7_9276_3833259d8e96" Name="node_modules">
+                  <Directory Id="__electron_de22dff3_8e3c_49bf_ac5f_d742aa8bb92e" Name="@electron">
+
+                  </Directory>
+                  <Directory Id="__sindresorhus_bc5db6c8_f331_4fb7_85d0_29c2143b072d" Name="@sindresorhus">
+
+                  </Directory>
+                  <Directory Id="__szmarczak_cda6a1c0_6db0_4112_b7db_e16d88afd86f" Name="@szmarczak">
+
+                  </Directory>
+                  <Directory Id="_resources_app_node_modules__types_c5a12497_2ce1_4520_a60d_daa25c652ca2" Name="@types">
+
+                  </Directory>                  <Component Id="_.package_lock.json_71f12123_2101_4731_8f84_10d993ebe20c" Guid="eacb9cd2-ace5-4759-a9a1-37895dede43e" Win64="no">
+                    <File Name=".package-lock.json" Id="_.package_lock.json_71f12123_2101_4731_8f84_10d993ebe20c" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\node_modules\.package-lock.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                  </Component>
+                </Directory>
+                <Component Id="_resources_app_bootstrap.css_604276a6_41f9_41a7_b2a4_8ff9a132f011" Guid="611756fc-c5d4-45f2-b5bb-dfef59a0a1de" Win64="no">
+                  <File Name="bootstrap.css" Id="_resources_app_bootstrap.css_604276a6_41f9_41a7_b2a4_8ff9a132f011" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\bootstrap.css" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_functions.js_ebb709ad_d352_4a72_8f51_ebf790ba100f" Guid="7e7826e1-fdc7-4931-a04b-50ec4a7a79d7" Win64="no">
+                  <File Name="functions.js" Id="_resources_app_functions.js_ebb709ad_d352_4a72_8f51_ebf790ba100f" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\functions.js" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_gameScreen.html_6c6a5eee_5e69_4cd7_bf50_fc8ea6a4aabb" Guid="4b2b2109-e47d-4a25-b8a5-8ecb488ca307" Win64="no">
+                  <File Name="gameScreen.html" Id="_resources_app_gameScreen.html_6c6a5eee_5e69_4cd7_bf50_fc8ea6a4aabb" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\gameScreen.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_index.html_3f9b3cd0_cad3_4e03_b764_2f0b72f82c55" Guid="869f55e3-fa3c-4f5a-9abb-8a1fb4df6e88" Win64="no">
+                  <File Name="index.html" Id="_resources_app_index.html_3f9b3cd0_cad3_4e03_b764_2f0b72f82c55" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\index.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_main.js_99c58ca9_3bfa_46f1_8c4a_09c177f8d008" Guid="b31e9ecd-e85c-4096-a097-77dcf7d5bf6f" Win64="no">
+                  <File Name="main.js" Id="_resources_app_main.js_99c58ca9_3bfa_46f1_8c4a_09c177f8d008" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\main.js" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_package.json_8542c2be_fd6a_4209_8223_86c3e05b354a" Guid="298257dd-b49d-483d-9ad3-b692b2c42f6f" Win64="no">
+                  <File Name="package.json" Id="_resources_app_package.json_8542c2be_fd6a_4209_8223_86c3e05b354a" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\package.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_results.html_1ecc5712_227e_468a_8584_df42c06f19a6" Guid="2a0ee850-2d4b-4484-9757-e51d4606300c" Win64="no">
+                  <File Name="results.html" Id="_resources_app_results.html_1ecc5712_227e_468a_8584_df42c06f19a6" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\results.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_style.css_6c2ca1dc_94b1_40d1_80c9_5a24ad0b0ef9" Guid="9652b283-1c2d-453f-b696-f6bfca0e81b8" Win64="no">
+                  <File Name="style.css" Id="_resources_app_style.css_6c2ca1dc_94b1_40d1_80c9_5a24ad0b0ef9" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\style.css" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+                <Component Id="_resources_app_styleIndex.css_b005c8c0_ac81_4de4_bc05_6339a2be1e8f" Guid="de29acc9-77aa-41bf-b8c2-b7ce1de5a4b2" Win64="no">
+                  <File Name="styleIndex.css" Id="_resources_app_styleIndex.css_b005c8c0_ac81_4de4_bc05_6339a2be1e8f" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources\app\styleIndex.css" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+                </Component>
+              </Directory>
+
+            </Directory>
+
+            <Directory Id="_swiftshader_4af852ff_595b_4b7f_a48d_cffefed9db28" Name="swiftshader">
+              <Component Id="_swiftshader_libEGL.dll_93dc1506_9049_42db_a0f9_70e17ae3e383" Guid="51aa682f-3638-4043-bc0a-4ec1abd05ef2" Win64="no">
+                <File Name="libEGL.dll" Id="_swiftshader_libEGL.dll_93dc1506_9049_42db_a0f9_70e17ae3e383" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\swiftshader\libEGL.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+              <Component Id="_swiftshader_libGLESv2.dll_2caa7d8b_9853_4c6b_8436_9fc3e1fe3b26" Guid="2ec975d4-8f1a-4ff7-815f-a92c54a8ec9c" Win64="no">
+                <File Name="libGLESv2.dll" Id="_swiftshader_libGLESv2.dll_2caa7d8b_9853_4c6b_8436_9fc3e1fe3b26" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\swiftshader\libGLESv2.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+              </Component>
+            </Directory>            <Component Id="_Election_22.exe_1ccd9f75_57d4_4c73_9d3a_a0bbd7332f30" Guid="95e408d9-c3ea-464d-bd0d-590586f049e2" Win64="no">
+              <File Name="Election'22.exe" Id="_Election_22.exe_1ccd9f75_57d4_4c73_9d3a_a0bbd7332f30" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\Election'22.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_LICENSE_f82a9844_0892_4b8d_9c91_0f1f099ebade" Guid="8313e6d2-7214-4506-971e-ade06ed91161" Win64="no">
+              <File Name="LICENSE" Id="_LICENSE_f82a9844_0892_4b8d_9c91_0f1f099ebade" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\LICENSE" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_LICENSES.chromium.html_20978286_9ec7_467d_b701_33d3e96781fd" Guid="4178d1e5-6fd4-4f05-955b-9f0a8ee5b031" Win64="no">
+              <File Name="LICENSES.chromium.html" Id="_LICENSES.chromium.html_20978286_9ec7_467d_b701_33d3e96781fd" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\LICENSES.chromium.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_chrome_100_percent.pak_71758320_de5a_47e4_94bb_bc35f8c7eb8a" Guid="d5a00f61-e67d-4dba-9bca-ef75422db055" Win64="no">
+              <File Name="chrome_100_percent.pak" Id="_chrome_100_percent.pak_71758320_de5a_47e4_94bb_bc35f8c7eb8a" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\chrome_100_percent.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_chrome_200_percent.pak_570922ec_c7db_4139_9486_e5d515b8a371" Guid="27ebe363-2b78-4cd7-b50c-bef79dd9ee88" Win64="no">
+              <File Name="chrome_200_percent.pak" Id="_chrome_200_percent.pak_570922ec_c7db_4139_9486_e5d515b8a371" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\chrome_200_percent.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_d3dcompiler_47.dll_97ca89c2_a67f_40f0_943c_743288081dae" Guid="de2cf427-1f5e-4ebc-8124-2533bd6080c8" Win64="no">
+              <File Name="d3dcompiler_47.dll" Id="_d3dcompiler_47.dll_97ca89c2_a67f_40f0_943c_743288081dae" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\d3dcompiler_47.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_ffmpeg.dll_620797d5_5c1f_4d10_a8f4_5dc31cdf6a98" Guid="1c60a270-fdf1-417b-828a-0c0d525eceaa" Win64="no">
+              <File Name="ffmpeg.dll" Id="_ffmpeg.dll_620797d5_5c1f_4d10_a8f4_5dc31cdf6a98" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\ffmpeg.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_icudtl.dat_1cde20ed_4d8e_4dd8_a732_9b176d2e3a8e" Guid="16e73601-3f42-45dd-b44d-6b40da90e2c4" Win64="no">
+              <File Name="icudtl.dat" Id="_icudtl.dat_1cde20ed_4d8e_4dd8_a732_9b176d2e3a8e" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\icudtl.dat" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_libEGL.dll_41eb9694_aea8_4360_88f5_232ff4fcc362" Guid="02cb1940-04bb-40a3-be97-326d2770e250" Win64="no">
+              <File Name="libEGL.dll" Id="_libEGL.dll_41eb9694_aea8_4360_88f5_232ff4fcc362" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\libEGL.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_libGLESv2.dll_a2c457ec_40d8_492f_bb6a_f449baf1f6a9" Guid="b3c5959a-fdb9-4847-bab2-4e62a49febf7" Win64="no">
+              <File Name="libGLESv2.dll" Id="_libGLESv2.dll_a2c457ec_40d8_492f_bb6a_f449baf1f6a9" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\libGLESv2.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_resources.pak_381c0b58_4994_49ad_9de6_85a0204e5c8f" Guid="960191da-842c-4f89-ad99-a2f935f258ed" Win64="no">
+              <File Name="resources.pak" Id="_resources.pak_381c0b58_4994_49ad_9de6_85a0204e5c8f" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\resources.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_snapshot_blob.bin_f195521b_ad8e_4075_a488_0cbe4395c0b4" Guid="6343d0bf-4245-45ac-a924-14994c0b486b" Win64="no">
+              <File Name="snapshot_blob.bin" Id="_snapshot_blob.bin_f195521b_ad8e_4075_a488_0cbe4395c0b4" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\snapshot_blob.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_v8_context_snapshot.bin_42b52b1c_2614_42ee_9149_2c05bcedeae7" Guid="541d7f59-6224-4521-9c68-e060e6cb8093" Win64="no">
+              <File Name="v8_context_snapshot.bin" Id="_v8_context_snapshot.bin_42b52b1c_2614_42ee_9149_2c05bcedeae7" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\v8_context_snapshot.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_version_ff140d0f_c720_4441_8682_561f9fe1a8af" Guid="193b01a9-9bec-431c-baf3-b6c743d1dba3" Win64="no">
+              <File Name="version" Id="_version_ff140d0f_c720_4441_8682_561f9fe1a8af" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\version" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_vk_swiftshader.dll_dff2b833_4b2a_4511_ba9b_730eb8274dcc" Guid="1f1e0ea8-3dec-47df-ab5a-550ebc7a12a4" Win64="no">
+              <File Name="vk_swiftshader.dll" Id="_vk_swiftshader.dll_dff2b833_4b2a_4511_ba9b_730eb8274dcc" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\vk_swiftshader.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_vk_swiftshader_icd.json_e1699a36_e972_4894_9bfb_902f38807401" Guid="ba63a5a5-74bd-4e75-92dd-fd052252ce75" Win64="no">
+              <File Name="vk_swiftshader_icd.json" Id="_vk_swiftshader_icd.json_e1699a36_e972_4894_9bfb_902f38807401" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\vk_swiftshader_icd.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+            <Component Id="_vulkan_1.dll_82f84089_b060_4814_b47f_f2b9338a0282" Guid="6858160e-d8ce-4c29-acfa-855357aaf0cb" Win64="no">
+              <File Name="vulkan-1.dll" Id="_vulkan_1.dll_82f84089_b060_4814_b47f_f2b9338a0282" Source="C:\Users\Zsolt\Desktop\election22\Election'22-win32-x64\vulkan-1.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+            </Component>
+          </Directory>
+          <Component Id="_Election_22.exe_02c3686e_47fc_49f1_b4c6_c3ef1ea2bee0" Guid="b71d5076-7633-4eef-a750-27578e737cc4" Win64="no">
+            <File Name="Election'22.exe" Id="_Election_22.exe_02c3686e_47fc_49f1_b4c6_c3ef1ea2bee0" Source="C:\Users\Zsolt\AppData\Local\Temp\Election'22wLAdIw\Election'22.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+          </Component>
+          <Component Id="_.installInfo.json_f794bdfb_0cf8_4101_82d6_0ad050577cf2" Guid="ccfb8408-338c-400d-adf7-0f1c568fe76d" Win64="no">
+            <File Name=".installInfo.json" Id="_.installInfo.json_f794bdfb_0cf8_4101_82d6_0ad050577cf2" Source="C:\Users\Zsolt\AppData\Local\Temp\.installInfo5FEWQD\.installInfo.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x86"/>
+          </Component>
+          <Component Id="RegistryInstallPath" Guid="a6622447-3333-400f-9642-5fea644f03f2" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="InstallPath" Type="string" Value="[APPLICATIONROOTDIRECTORY]" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallDisplayName" Guid="0309b942-240d-4e2b-b540-be79244b96f2" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="DisplayName" Type="string" Value="[VisibleProductName]" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallPublisher" Guid="b3da4ab5-fc1f-4355-8f68-395401fe5ef2" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="Publisher" Type="string" Value="Zsolt Ardai" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallDisplayVersion" Guid="c8034c76-ef8f-4978-8ede-78de5016bbb7" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="DisplayVersion" Type="string" Value="1.0.0" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallModifyString" Guid="49e4da51-0122-4d03-9e72-70e4a9ed077e" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="ModifyPath" Type="expandable" Value="MsiExec.exe /I {2845279F-0666-4BD7-A44C-11079261E735}" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallString" Guid="cf3cf272-d787-43e7-b738-9b63d61929cd" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="UninstallString" Type="expandable" Value="MsiExec.exe /X {2845279F-0666-4BD7-A44C-11079261E735}" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+          <Component Id="UninstallDisplayIcon" Guid="eff095f2-54c0-4721-926e-6935cc362a4f" Win64="no">
+            <RegistryKey Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{2845279F-0666-4BD7-A44C-11079261E735}.msq" ForceCreateOnInstall="no" ForceDeleteOnUninstall="yes">
+              <RegistryValue Name="DisplayIcon" Type="expandable" Value="[SystemFolder]msiexec.exe" KeyPath="yes"/>
+            </RegistryKey>
+          </Component>
+        </Directory>
+      </Directory>
+
+      <!-- Desktop -->
+      <Directory Id="DesktopFolder" Name="Desktop" />
+
+      <!-- Start Menu -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Zsolt Ardai"/>
+      </Directory>
+    </Directory>
+
+    <!-- Step 3: Add app to Start Menu -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="e24b8417-92b9-4cce-a574-b7724b605bb7" Win64="no">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="Election'22"
+                  Description="This is a demo application"
+                  Target="[APPLICATIONROOTDIRECTORY]Election'22.exe"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY">
+          <ShortcutProperty Key="System.AppUserModel.ID" Value="com.squirrel.election'22.election'22" />
+        </Shortcut>
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU"
+                       Key="Software\Microsoft\Election'22"
+                       Name="installed"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+
+   <!-- Step 4: Add app desktop shortcut --> 
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="b74153d5-167e-4e22-bae7-6949eb7adc00" >
+          <Shortcut Id="MyDesktopShortcut"
+                    Name="Election'22"
+                    Description="This is a demo application"
+                    Target="[APPLICATIONROOTDIRECTORY]Election'22.exe"
+                    WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+          <RegistryValue Root="HKCU"
+                    Key="Software\Microsoft\Election'22"
+                    Name="installed"
+                    Type="integer"
+                    Value="1"
+                    KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+
+    <!-- Lets cleanup any files that are were not part of the initial install
+    via this MSI. Such as newer versions installed by the auto-updater. -->
+    <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
+      <Component Id="PurgeOnUninstall" Guid="910fa502-0975-4709-bfa6-bf5b8f259a99" Win64="no">
+        <CreateFolder/>
+        <util:RemoveFolderEx On="uninstall" Property="INSTALLPATH" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="Complete" Title="Election'22 (1.0.0)" Description="The complete package." Display="expand" Level="1" ConfigurableDirectory="APPLICATIONROOTDIRECTORY">
+      <!-- Step 5: Tell WiX to install the files -->
+      <Feature Id="MainApplication" Title="Main Application" Level="1" Description="The main components to run the applications." >
+        <ComponentRef Id="_locales_am.pak_23b25a94_3817_4d06_af62_050ca5a96952" />
+        <ComponentRef Id="_locales_ar.pak_14a7489c_4e91_4846_8d8c_b1e0345f9b70" />
+        <ComponentRef Id="_locales_bg.pak_a6ef7902_333d_4bf1_b8dc_bd2a9b71098e" />
+        <ComponentRef Id="_locales_bn.pak_3ee2b310_f92a_4302_aa56_fd9c8ffb6094" />
+        <ComponentRef Id="_locales_ca.pak_dd0243c4_0e44_41f4_86d3_de00493d73a0" />
+        <ComponentRef Id="_locales_cs.pak_4ed93875_5e59_426e_acc6_39aea5b5d485" />
+        <ComponentRef Id="_locales_da.pak_e5a87a42_d461_4b65_aedc_8eb045105cf4" />
+        <ComponentRef Id="_locales_de.pak_39513854_dd7e_48d6_9cab_7796e57a7b0b" />
+        <ComponentRef Id="_locales_el.pak_747c6cee_6dc3_4725_95d8_f9c38bb02a1b" />
+        <ComponentRef Id="_locales_en_GB.pak_efaa7280_e7c4_45c3_86a5_c71ce3114717" />
+        <ComponentRef Id="_locales_en_US.pak_feba3caa_0154_4f4b_9601_e6cb8ecb8cf5" />
+        <ComponentRef Id="_locales_es_419.pak_53262151_81c6_4bea_b70a_c8f653eda56c" />
+        <ComponentRef Id="_locales_es.pak_d0567188_6c9c_45d8_bb88_199fafc15e3b" />
+        <ComponentRef Id="_locales_et.pak_a07e1b96_914a_4d89_b7b0_baedb0d42fe3" />
+        <ComponentRef Id="_locales_fa.pak_c188c1f0_feac_4889_9c09_ec3ae8d8a478" />
+        <ComponentRef Id="_locales_fi.pak_2b3aa969_3974_464d_a327_0b6b574065d7" />
+        <ComponentRef Id="_locales_fil.pak_784c5a32_18f9_4bb4_afa5_c2290060340e" />
+        <ComponentRef Id="_locales_fr.pak_88a5f073_d65f_4390_b437_b48918fb3dcb" />
+        <ComponentRef Id="_locales_gu.pak_5c74d44b_1238_4ee7_ab31_9060bd5cdb1f" />
+        <ComponentRef Id="_locales_he.pak_7d027d9b_d604_467b_8035_c8e414881cd5" />
+        <ComponentRef Id="_locales_hi.pak_e29cb9b1_d679_4ad9_973d_4c1851b3d457" />
+        <ComponentRef Id="_locales_hr.pak_020a5d5c_749e_43d5_af32_b8081072624b" />
+        <ComponentRef Id="_locales_hu.pak_58572ae6_db15_4475_a61e_e75c56e195b3" />
+        <ComponentRef Id="_locales_id.pak_b2c2a43e_a035_44cf_9c40_913aeadbadf5" />
+        <ComponentRef Id="_locales_it.pak_56eafd82_75a0_4b58_851a_c1e3b8a7ea93" />
+        <ComponentRef Id="_locales_ja.pak_1f0d3e27_aff8_468e_bd59_00670047617d" />
+        <ComponentRef Id="_locales_kn.pak_a1fb3e19_95bd_4ae2_b82a_e5f47c96b4fe" />
+        <ComponentRef Id="_locales_ko.pak_cffb4db3_9a8b_4022_a8dd_4a2d22e5e72b" />
+        <ComponentRef Id="_locales_lt.pak_9bd21eb9_3f03_41fa_adf5_e6763eb16f1a" />
+        <ComponentRef Id="_locales_lv.pak_0c5241af_ce7f_419a_9e69_625ec24cc6fe" />
+        <ComponentRef Id="_locales_ml.pak_bb1a85b0_0a32_4756_8c3e_2a104a319ee5" />
+        <ComponentRef Id="_locales_mr.pak_74247a27_1349_4f6f_a43f_8079ceccb01d" />
+        <ComponentRef Id="_locales_ms.pak_8232281c_290a_4745_bb08_9d1279dc036d" />
+        <ComponentRef Id="_locales_nb.pak_91961c52_67f0_407b_bd7d_7a001cff2238" />
+        <ComponentRef Id="_locales_nl.pak_262cb7fd_35d9_48f9_8e00_d7903f54955d" />
+        <ComponentRef Id="_locales_pl.pak_9ab3a9a6_9bbf_4fd8_80eb_ce2105cceddf" />
+        <ComponentRef Id="_locales_pt_BR.pak_3087046d_29d0_47d2_b6d0_bb342b6ee550" />
+        <ComponentRef Id="_locales_pt_PT.pak_ee4d61ca_788c_4829_bd91_b61397b0080f" />
+        <ComponentRef Id="_locales_ro.pak_7a22b4aa_2acd_4e4e_824b_ee4c1369a77b" />
+        <ComponentRef Id="_locales_ru.pak_ff327c3d_8a2d_4f0e_8343_8fc77d39a846" />
+        <ComponentRef Id="_locales_sk.pak_92158655_75a8_4821_bd6b_d27ac3258e2b" />
+        <ComponentRef Id="_locales_sl.pak_3c30d5bc_02b7_48c8_90d2_8ee5ac15303a" />
+        <ComponentRef Id="_locales_sr.pak_cccc7947_cff0_4441_88b2_246a61e97289" />
+        <ComponentRef Id="_locales_sv.pak_0481e7ed_eb24_4907_a324_0ab40f5befe0" />
+        <ComponentRef Id="_locales_sw.pak_d8c1dbc1_28b8_4033_83e9_7846d2a33338" />
+        <ComponentRef Id="_locales_ta.pak_11784e16_296f_4eea_8484_2c2e31e1e276" />
+        <ComponentRef Id="_locales_te.pak_1aa75d0f_16fb_478e_96f4_6c05e9634103" />
+        <ComponentRef Id="_locales_th.pak_e3d5f2ee_290c_4be3_aecb_4110f3aedde4" />
+        <ComponentRef Id="_locales_tr.pak_bec8d14d_d66d_4f4e_a8d6_64a5734570f7" />
+        <ComponentRef Id="_locales_uk.pak_71495e4a_81d0_4e12_95e6_58df70086aaa" />
+        <ComponentRef Id="_locales_vi.pak_a16c9205_38dc_4079_8e12_4292d0ac2160" />
+        <ComponentRef Id="_locales_zh_CN.pak_a74c68f2_ae0e_452d_92c7_82b1443d98b2" />
+        <ComponentRef Id="_locales_zh_TW.pak_e2253192_d1e9_4721_a0bf_e3655562ac75" />
+        <ComponentRef Id="_resources_app_data_data.json_7d3cfdc1_39b5_413d_af80_8a0c2a72dd78" />
+        <ComponentRef Id="_resources_app_data_districts.js_784788e8_4c62_4c37_9966_ed1016f9c50f" />
+        <ComponentRef Id="_resources_app_img_0.png_7ce70cdc_40d0_407e_b879_f683c82ce634" />
+        <ComponentRef Id="_resources_app_img_0_selected.png_3210a052_68f3_44ac_9c2b_d5d856e45f07" />
+        <ComponentRef Id="_resources_app_img_1.png_9701407a_9989_4315_b50d_642d8bc5321d" />
+        <ComponentRef Id="_resources_app_img_1_selected.png_291400a6_d277_460a_b8a7_94edd495df1c" />
+        <ComponentRef Id="_resources_app_img_2.png_e9e0febd_6e56_41f4_9154_73c2ae224c2b" />
+        <ComponentRef Id="_resources_app_img_2_selected.png_983c8c16_85ec_4459_a3a8_54036980b93b" />
+        <ComponentRef Id="_resources_app_img_3.png_fba3b4ef_69bf_471c_9675_86a1bc5c93aa" />
+        <ComponentRef Id="_resources_app_img_3_selected.png_be0b293a_b8fe_4f74_b178_ecfb473b7c38" />
+        <ComponentRef Id="_resources_app_img_icon.jpg_b45a29f4_ef25_46f6_95ce_53b244944c9d" />
+        <ComponentRef Id="_resources_app_img_icon.png_5f80db2f_12e7_491b_9f54_33ad1658a0e8" />
+        <ComponentRef Id="_resources_app_music_music.mp3_c34e6dee_39f0_4c3f_8eed_d4eaecc539ed" />
+        <ComponentRef Id="_.package_lock.json_71f12123_2101_4731_8f84_10d993ebe20c" />
+        <ComponentRef Id="_resources_app_bootstrap.css_604276a6_41f9_41a7_b2a4_8ff9a132f011" />
+        <ComponentRef Id="_resources_app_functions.js_ebb709ad_d352_4a72_8f51_ebf790ba100f" />
+        <ComponentRef Id="_resources_app_gameScreen.html_6c6a5eee_5e69_4cd7_bf50_fc8ea6a4aabb" />
+        <ComponentRef Id="_resources_app_index.html_3f9b3cd0_cad3_4e03_b764_2f0b72f82c55" />
+        <ComponentRef Id="_resources_app_main.js_99c58ca9_3bfa_46f1_8c4a_09c177f8d008" />
+        <ComponentRef Id="_resources_app_package.json_8542c2be_fd6a_4209_8223_86c3e05b354a" />
+        <ComponentRef Id="_resources_app_results.html_1ecc5712_227e_468a_8584_df42c06f19a6" />
+        <ComponentRef Id="_resources_app_style.css_6c2ca1dc_94b1_40d1_80c9_5a24ad0b0ef9" />
+        <ComponentRef Id="_resources_app_styleIndex.css_b005c8c0_ac81_4de4_bc05_6339a2be1e8f" />
+        <ComponentRef Id="_swiftshader_libEGL.dll_93dc1506_9049_42db_a0f9_70e17ae3e383" />
+        <ComponentRef Id="_swiftshader_libGLESv2.dll_2caa7d8b_9853_4c6b_8436_9fc3e1fe3b26" />
+        <ComponentRef Id="_Election_22.exe_1ccd9f75_57d4_4c73_9d3a_a0bbd7332f30" />
+        <ComponentRef Id="_LICENSE_f82a9844_0892_4b8d_9c91_0f1f099ebade" />
+        <ComponentRef Id="_LICENSES.chromium.html_20978286_9ec7_467d_b701_33d3e96781fd" />
+        <ComponentRef Id="_chrome_100_percent.pak_71758320_de5a_47e4_94bb_bc35f8c7eb8a" />
+        <ComponentRef Id="_chrome_200_percent.pak_570922ec_c7db_4139_9486_e5d515b8a371" />
+        <ComponentRef Id="_d3dcompiler_47.dll_97ca89c2_a67f_40f0_943c_743288081dae" />
+        <ComponentRef Id="_ffmpeg.dll_620797d5_5c1f_4d10_a8f4_5dc31cdf6a98" />
+        <ComponentRef Id="_icudtl.dat_1cde20ed_4d8e_4dd8_a732_9b176d2e3a8e" />
+        <ComponentRef Id="_libEGL.dll_41eb9694_aea8_4360_88f5_232ff4fcc362" />
+        <ComponentRef Id="_libGLESv2.dll_a2c457ec_40d8_492f_bb6a_f449baf1f6a9" />
+        <ComponentRef Id="_resources.pak_381c0b58_4994_49ad_9de6_85a0204e5c8f" />
+        <ComponentRef Id="_snapshot_blob.bin_f195521b_ad8e_4075_a488_0cbe4395c0b4" />
+        <ComponentRef Id="_v8_context_snapshot.bin_42b52b1c_2614_42ee_9149_2c05bcedeae7" />
+        <ComponentRef Id="_version_ff140d0f_c720_4441_8682_561f9fe1a8af" />
+        <ComponentRef Id="_vk_swiftshader.dll_dff2b833_4b2a_4511_ba9b_730eb8274dcc" />
+        <ComponentRef Id="_vk_swiftshader_icd.json_e1699a36_e972_4894_9bfb_902f38807401" />
+        <ComponentRef Id="_vulkan_1.dll_82f84089_b060_4814_b47f_f2b9338a0282" />
+        <ComponentRef Id="_Election_22.exe_02c3686e_47fc_49f1_b4c6_c3ef1ea2bee0" />
+        <ComponentRef Id="_.installInfo.json_f794bdfb_0cf8_4101_82d6_0ad050577cf2" />
+        <ComponentRef Id="RegistryInstallPath" />
+        <ComponentRef Id="UninstallDisplayName" />
+        <ComponentRef Id="UninstallPublisher" />
+        <ComponentRef Id="UninstallDisplayVersion" />
+        <ComponentRef Id="UninstallModifyString" />
+        <ComponentRef Id="UninstallString" />
+        <ComponentRef Id="UninstallDisplayIcon" />
+        <ComponentRef Id="ApplicationShortcut" />
+        <ComponentRef Id="DesktopShortcut" />
+        <ComponentRef Id="PurgeOnUninstall" />
+      </Feature> 
+    </Feature> 
+  </Product>
+</Wix>
