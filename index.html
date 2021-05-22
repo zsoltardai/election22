@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Election'22</title>
+        <link rel="stylesheet" href="bootstrap.css">
+        <link rel="stylesheet" href="styleIndex.css">
+        <script src="https://kit.fontawesome.com/1c819c2c7e.js" crossorigin="anonymous"></script>
+        <style>
+            *
+            {
+                margin: 0;
+                padding: 0;
+            }
+            .container
+            {
+                width: 100vw;
+                height: auto;
+                padding-top: 5vh;
+            }
+
+            .scroll_enabled {
+                overflow: scroll;
+            }
+
+            .scroll_enabled::-webkit-scrollbar {
+                width: 20px;
+            }
+            .scroll_enabled::-webkit-scrollbar-corner {
+                background: rgba(0,0,0,0);
+            }
+            .scroll_enabled::-webkit-scrollbar-thumb {
+                background-color: #ccc;
+                border-radius: 6px;
+                border: 4px solid rgba(0,0,0,0);
+                background-clip: content-box;
+                min-width: 32px;
+                min-height: 32px;
+            }
+            .scroll_enabled::-webkit-scrollbar-track {
+                background-color: rgba(0, 0, 0, 0);
+            }
+        </style>
+    </head>
+    <body style="background-color: #1a252f; overflow: hidden;">
+        <div>
+            <div style="display: flex; width: 100vw; margin: 0; padding: 0; height: 40px; justify-content: space-between; background-color: #2c3e50;">
+                <div style="width: 93vw; height: 100%; -webkit-app-region: drag;"></div>
+                <button style="background-color: rgba(255, 255, 255, 0); width: 7vw; border: none;" id="btnClose" class="close">
+                    <i style="color: #fff;" class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="container scroll_enabled" style="overflow-y: scroll; height: 95vh; margin-top: 1vh;">
+                <div class="container-row" style="display: flex; margin-bottom: 20px; width: 100%; justify-content: space-evenly;">
+                    <div class="fideszCard" class="card text-white bg-primary mb-3" style="width: 80%;">
+                        <div style="text-align: center;" class="card-header">Fidesz</div>
+                        <div class="card-body">
+                            <p id="fideszText" class="card-text">
+                                Fidesz – Hungarian Civic Alliance is a right-wing national-conservative political party in Hungary.
+                            </p>
+                            <div style="display: flex; justify-content: center;" class="buttons">
+                                <button class="btnFidesz" class="btn btn-primary" style="display: block; width: 90%;"  id="btnFideszMore">
+                                    show more ▼
+                                </button>
+                                <button class="btnFidesz" class="btn btn-primary" style="display: none; width: 90%;" id="btnFideszLess">
+                                    show less ▲
+                                </button>
+                            </div>
+                            <script>
+                                const btnFideszMore = document.getElementById('btnFideszMore');
+                                const btnFideszLess = document.getElementById('btnFideszLess');
+                                const fideszText = document.getElementById('fideszText');
+                                
+                                btnFideszMore.addEventListener('click', event =>
+                                {
+                                    fideszText.innerText = "Fidesz – Hungarian Civic Alliance is a right-wing national-conservative political party in Hungary. Founded in 1988 as a liberal youth party opposing the ruling communist government, Fidesz has come to dominate Hungarian politics on the national and local level since its landslide victory in the 2010 national elections on a joint list with the Christian Democratic People's Party, securing it a parliamentary supermajority that it retained in 2014 and again in 2018.";
+                                    btnFideszLess.style.display= 'block';
+                                    btnFideszMore.style.display = 'none';
+                                });
+    
+                                btnFideszLess.addEventListener('click', event =>
+                                {
+                                    fideszText.innerText = 'Fidesz – Hungarian Civic Alliance is a right-wing national-conservative political party in Hungary.';
+                                    btnFideszLess.style.display= 'none';
+                                    btnFideszMore.style.display = 'block';
+                                });
+                            </script>
+                        </div>
+                        <div class="card-bottom" style="display: flex; justify-content: center; padding-bottom: 10px;">
+                            <button id="btnFideszChoose" class="btnFideszChoose" style="width: 80%;" type="button" class="btn btn-primary">Choose</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-row" style="display: flex; margin-bottom: 20px; width: 100%; justify-content: space-evenly;">
+                    <div class="dkCard" class="card text-white bg-primary mb-3" style="width: 80%;">
+                        <div style="text-align: center;" class="card-header">Democratic Coalition</div>
+                        <div class="card-body">
+                            <p id="dkText" class="card-text">
+                                The Democratic Coalition is a social-liberal political party in Hungary,
+                                led by former Prime Minister Ferenc Gyurcsány.
+                            </p>
+                            <div style="display: flex; justify-content: center;" class="buttons">
+                                <button class="btnDk" class="btn btn-primary" style="display: block; width: 90%;"  id="btnDkMore">
+                                    show more ▼
+                                </button>
+                                <button class="btnDk" class="btn btn-primary" style="display: none; width: 90%;" id="btnDkLess">
+                                    show less ▲
+                                </button>
+                            </div>
+                            <script>
+                                const btnDkMore = document.getElementById('btnDkMore');
+                                const btnDkLess = document.getElementById('btnDkLess');
+                                const dkText = document.getElementById('dkText');
+                                
+                                btnDkMore.addEventListener('click', event =>
+                                {
+                                    dkText.innerText = "The Democratic Coalition is a social-liberal political party in Hungary, led by former Prime Minister Ferenc Gyurcsány. Founded in 2010 as a faction within the Hungarian Socialist Party, the Democratic Coalition split from the MSZP on 22 October 2011 and became a separate party. It has nine MPs in the National Assembly and four MEPs in the European Parliament.";
+                                    btnDkLess.style.display= 'block';
+                                    btnDkMore.style.display = 'none';
+                                });
+    
+                                btnDkLess.addEventListener('click', event =>
+                                {
+                                    dkText.innerText = 'The Democratic Coalition is a social-liberal political party in Hungary, led by former Prime Minister Ferenc Gyurcsány.';
+                                    btnDkLess.style.display= 'none';
+                                    btnDkMore.style.display = 'block';
+                                });
+                            </script>
+                        </div>
+                        <div class="card-bottom" style="display: flex; justify-content: center; padding-bottom: 10px;">
+                            <button id="btnDkChoose" class="btnDkChoose" style="width: 80%;" type="button" class="btn btn-primary">Choose</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-row" style="display: flex; margin-bottom: 20px; width: 100%; justify-content: space-evenly;">
+                    <div class="momentumCard" class="card text-white bg-primary mb-3" style="width: 80%;">
+                        <div style="text-align: center;" class="card-header">Momentum Movement</div>
+                        <div class="card-body">
+                            <p id="momentumText" class="card-text">
+                                Momentum Movement is a centrist Hungarian political party founded in March 2017.
+                            </p>
+                            <div style="display: flex; justify-content: center;" class="buttons">
+                                <button class="btnMomentum" class="btn btn-primary" style="display: block; width: 90%;"  id="btnMomentumMore">
+                                    show more ▼
+                                </button>
+                                <button class="btnMomentum" class="btn btn-primary" style="display: none; width: 90%;" id="btnMomentumLess">
+                                    show less ▲
+                                </button>
+                            </div>
+                            <script>
+                                const btnMomentumMore = document.getElementById('btnMomentumMore');
+                                const btnMomentumLess = document.getElementById('btnMomentumLess');
+                                const momentumText = document.getElementById('momentumText');
+                                
+                                btnMomentumMore.addEventListener('click', event =>
+                                {
+                                    momentumText.innerText = "Momentum Movement is a centrist Hungarian political party founded in March 2017. It came to national prominence as a political association in January 2017 after organizing a petition about the Budapest bid for the 2024 Summer Olympics, calling for a public referendum on the matter. The petition, was successful, but the government cancelled the Olympic bid before a referendum could have been held. After its establishment as a political party, Momentum quickly built a national following, and presently has approximately 4,000 members.";
+                                    btnMomentumLess.style.display= 'block';
+                                    btnMomentumMore.style.display = 'none';
+                                });
+    
+                                btnMomentumLess.addEventListener('click', event =>
+                                {
+                                    momentumText.innerText = 'Momentum Movement is a centrist Hungarian political party founded in March 2017.';
+                                    btnMomentumLess.style.display= 'none';
+                                    btnMomentumMore.style.display = 'block';
+                                });
+                            </script>
+                        </div>
+                        <div class="card-bottom" style="display: flex; justify-content: center; padding-bottom: 10px;">
+                            <button id="btnMomentumChoose" class="btnMomentumChoose" style="width: 80%;" type="button" class="btn btn-primary">Choose</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-row" style="display: flex; margin-bottom: 20px; width: 100%; justify-content: space-evenly;">
+                    <div class="jobbikCard" class="card text-white bg-primary mb-3" style="width: 80%;">
+                        <div style="text-align: center;" class="card-header">Jobbik</div>
+                        <div class="card-body">
+                            <p id="jobbikText" class="card-text">
+                                The Movement for a Better Hungary, commonly known as Jobbik, is a Hungarian political party.
+                            </p>
+                            <div style="display: flex; justify-content: center;" class="buttons">
+                                <button class="btnJobbik" class="btn btn-primary" style="display: block; width: 90%;"  id="btnJobbikMore">
+                                    show more ▼
+                                </button>
+                                <button class="btnJobbik" class="btn btn-primary" style="display: none; width: 90%;" id="btnJobbikLess">
+                                    show less ▲
+                                </button>
+                            </div>
+                            <script>
+                                const btnJobbikMore = document.getElementById('btnJobbikMore');
+                                const btnJobbikLess = document.getElementById('btnJobbikLess');
+                                const jobbikText = document.getElementById('jobbikText');
+                                
+                                btnJobbikMore.addEventListener('click', event =>
+                                {
+                                    jobbikText.innerText = "The Movement for a Better Hungary, commonly known as Jobbik, is a Hungarian political party. Originating with radical and nationalist roots, at its beginnings, the party described itself as a principled, conservative and radically patriotic Christian party, whose fundamental purpose is the protection of Hungarian values and interests.";
+                                    btnJobbikLess.style.display= 'block';
+                                    btnJobbikMore.style.display = 'none';
+                                });
+    
+                                btnJobbikLess.addEventListener('click', event =>
+                                {
+                                    jobbikText.innerText = 'The Movement for a Better Hungary, commonly known as Jobbik, is a Hungarian political party.';
+                                    btnJobbikLess.style.display= 'none';
+                                    btnJobbikMore.style.display = 'block';
+                                });
+                            </script>
+                        </div>
+                        <div class="card-bottom" style="display: flex; justify-content: center; padding-bottom: 10px;">
+                            <button id="btnJobbikChoose" class="btnJobbikChoose" style="width: 80%;" type="button" class="btn btn-primary">Choose</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-row" style="display: flex; margin-bottom: 20px; width: 100%; justify-content: space-evenly;">
+                    <div class="mszpCard" class="card text-white bg-primary mb-3" style="width: 80%;">
+                        <div style="text-align: center;" class="card-header">MSZP</div>
+                        <div class="card-body">
+                            <p id="mszpText" class="card-text">
+                                The Hungarian Socialist Party, known mostly by its acronym MSZP, is a social-democratic political party in Hungary. 
+                            </p>
+                            <div style="display: flex; justify-content: center;" class="buttons">
+                                <button class="btnMszp" class="btn btn-primary" style="display: block; width: 90%;"  id="btnMszpMore">
+                                    show more ▼
+                                </button>
+                                <button class="btnMszp" class="btn btn-primary" style="display: none; width: 90%;" id="btnMszpLess">
+                                    show less ▲
+                                </button>
+                            </div>
+                            <script>
+                                const btnMszpMore = document.getElementById('btnMszpMore');
+                                const btnMszpLess = document.getElementById('btnMszpLess');
+                                const mszpText = document.getElementById('mszpText');
+                                
+                                btnMszpMore.addEventListener('click', event =>
+                                {
+                                    mszpText.innerText = "The Hungarian Socialist Party, known mostly by its acronym MSZP, is a social-democratic political party in Hungary. It was founded on 7 October 1989 as a post-communist evolution and one of two legal successors of the Hungarian Socialist Workers' Party. Along with its conservative rival Fidesz, MSZP was one of the two most dominant parties in Hungarian politics until 2010; however, the party lost much of its popular support as a result of the Őszöd speech, the consequent 2006 protests, and then the 2008 financial crisis. Following the 2010 election, MSZP became the largest opposition party in parliament, a position it held until 2018, when it was overtaken by the far-right Jobbik.";
+                                    btnMszpLess.style.display= 'block';
+                                    btnMszpMore.style.display = 'none';
+                                });
+    
+                                btnMszpLess.addEventListener('click', event =>
+                                {
+                                    mszpText.innerText = 'The Hungarian Socialist Party, known mostly by its acronym MSZP, is a social-democratic political party in Hungary.';
+                                    btnMszpLess.style.display= 'none';
+                                    btnMszpMore.style.display = 'block';
+                                });
+                            </script>
+                        </div>
+                        <div class="card-bottom" style="display: flex; justify-content: center; padding-bottom: 10px;">
+                            <button id="btnMszpChoose" class="btnMszpChoose" style="width: 80%;" type="button" class="btn btn-primary">Choose</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-row" style="display: flex; margin-bottom: 20px; width: 100%; justify-content: space-evenly;">
+                    <div class="lmpCard" class="card text-white bg-primary mb-3" style="width: 80%;">
+                        <div style="text-align: center;" class="card-header">LMP</div>
+                        <div class="card-body">
+                            <p id="lmpText" class="card-text">
+                                LMP – Hungary's Green Party, between 2009 and 2020: Politics Can Be Different, is a green-liberal political party in Hungary, founded in 2009.
+                            </p>
+                            <div style="display: flex; justify-content: center;" class="buttons">
+                                <button class="btnLmp" class="btn btn-primary" style="display: block; width: 90%;"  id="btnLmpMore">
+                                    show more ▼
+                                </button>
+                                <button class="btnLmp" class="btn btn-primary" style="display: none; width: 90%;" id="btnLmpLess">
+                                    show less ▲
+                                </button>
+                            </div>
+                            <script>
+                                const btnLmpMore = document.getElementById('btnLmpMore');
+                                const btnLmpLess = document.getElementById('btnLmpLess');
+                                const lmpText = document.getElementById('lmpText');
+                                
+                                btnLmpMore.addEventListener('click', event =>
+                                {
+                                    lmpText.innerText = "LMP – Hungary's Green Party, between 2009 and 2020: Politics Can Be Different, is a green-liberal political party in Hungary, founded in 2009. It was one of four parties to win seats in the National Assembly in the 2010 parliamentary election. The party is a member of the European Green Party. The party was preceded by a non-governmental organization social initiative founded in 2008, with the purpose of reforming Hungarian politics. LMP shares common ideologies with most green parties. Key issues are environmental protection, sustainable development and the fight against corruption in the current political elite. LMP highlights what they see as the pointlessness of the current partisan division between the left and right-wing forces, and their principle is deliberative democracy, which they believe decreases the distance between the people and the political elite.";
+                                    btnLmpLess.style.display= 'block';
+                                    btnLmpMore.style.display = 'none';
+                                });
+    
+                                btnLmpLess.addEventListener('click', event =>
+                                {
+                                    lmpText.innerText = "LMP – Hungary's Green Party, between 2009 and 2020: Politics Can Be Different, is a green-liberal political party in Hungary, founded in 2009.";
+                                    btnLmpLess.style.display= 'none';
+                                    btnLmpMore.style.display = 'block';
+                                });
+                            </script>
+                        </div>
+                        <div class="card-bottom" style="display: flex; justify-content: center; padding-bottom: 10px;">
+                            <button id="btnLmpChoose" class="btnLmpChoose" style="width: 80%;" type="button" class="btn btn-primary">Choose</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+    
+                const remote = require('electron').remote;
+    
+                document.getElementById("btnClose").addEventListener("click", function (e) {
+                    var window = remote.getCurrentWindow();
+                    window.close();
+                });
+    
+                const btnFideszChoose = document.getElementById('btnFideszChoose');
+                const btnDkChoose = document.getElementById('btnDkChoose');
+                const btnMomentumChoose = document.getElementById('btnMomentumChoose');
+                const btnJobbikChoose = document.getElementById('btnJobbikChoose');
+                const btnMszpChoose = document.getElementById('btnMszpChoose');
+                const btnLmpChoose = document.getElementById('btnLmpChoose');
+    
+                var fidesz_kdnp = {
+                    name: "fidesz_kdnp",
+                    title: 'Fidesz-KDNP',
+                    members: 43100,
+                    leader: 'Viktor Orbán',
+                    money: 0,
+                    membershipFee: 0.00005
+                };
+    
+                var dk = {
+                    name: "dk",
+                    title: "Democratic Coalition",
+                    members: 10141,
+                    leader: 'Ferenc Gyurcsány',
+                    money: 0,
+                    membershipFee: 0.0001
+                };
+    
+                var mszp = {
+                    name: "mszp",
+                    title:"Hungarian Socialist Party",
+                    members: 20000,
+                    leader: 'Bertalan Tóth',
+                    money: 0,
+                    membershipFee: 0.00002
+                };
+    
+                var jobbik = {
+                    name: "jobbik",
+                    title:"Movement for a Better Hungary",
+                    members: 17226,
+                    leader: 'Péter Jakab',
+                    money: 0,
+                    membershipFee: 0.00003
+                };
+    
+                var egyutt = {
+                    name: "egyutt",
+                    title: "Együtt",
+                    members: 650,
+                    leader: 'Péter Juhász',
+                    money: 0,
+                    membershipFee: 0.00005
+                };
+    
+                var momentum = {
+                    name: "momentum",
+                    title: "Momentum Movement",
+                    members: 1000,
+                    leader: 'András Fekete-Győr',
+                    money: 0,
+                    membershipFee: 0.0001
+                };
+    
+                var pm = {
+                    name: 'pm',
+                    title: 'Dialouge for Hungary',
+                    members: 600,
+                    leader: 'Tímea Szabó',
+                    money: 0,
+                    membershipFee: 0.00005
+                };
+    
+                var lmp = {
+                    name: 'lmp',
+                    title: "Politics Can be Different",
+                    members: 1900,
+                    leader: 'Erzsébet Schmuck',
+                    money: 0,
+                    membershipFee: 0.00005
+                };
+    
+    
+                btnFideszChoose.addEventListener('click', event => {
+                    localStorage.setItem('party', JSON.stringify(fidesz_kdnp));
+                    localStorage.setItem('1', JSON.stringify(dk));
+                    localStorage.setItem('2', JSON.stringify(mszp));
+                    localStorage.setItem('3', JSON.stringify(lmp));
+                    localStorage.setItem('4', JSON.stringify(jobbik));
+                    localStorage.setItem('5', JSON.stringify(momentum));
+                    localStorage.setItem('6', JSON.stringify(pm));
+                    localStorage.setItem('7', JSON.stringify(egyutt));
+                    window.location.href = 'gameScreen.html';
+                });
+    
+                btnDkChoose.addEventListener('click', event => {
+                    localStorage.setItem('party', JSON.stringify(dk));
+                    localStorage.setItem('1', JSON.stringify(fidesz_kdnp));
+                    localStorage.setItem('2', JSON.stringify(mszp));
+                    localStorage.setItem('3', JSON.stringify(lmp));
+                    localStorage.setItem('4', JSON.stringify(jobbik));
+                    localStorage.setItem('5', JSON.stringify(momentum));
+                    localStorage.setItem('6', JSON.stringify(pm));
+                    localStorage.setItem('7', JSON.stringify(egyutt));
+                    window.location.href = 'gameScreen.html';
+                });
+    
+                btnJobbikChoose.addEventListener('click', event => {
+                    localStorage.setItem('party', JSON.stringify(jobbik));
+                    localStorage.setItem('1', JSON.stringify(dk));
+                    localStorage.setItem('2', JSON.stringify(mszp));
+                    localStorage.setItem('3', JSON.stringify(lmp));
+                    localStorage.setItem('4', JSON.stringify(fidesz_kdnp));
+                    localStorage.setItem('5', JSON.stringify(momentum));
+                    localStorage.setItem('6', JSON.stringify(pm));
+                    localStorage.setItem('7', JSON.stringify(egyutt));
+                    window.location.href = 'gameScreen.html';
+                });
+    
+                btnMomentumChoose.addEventListener('click', event => {
+                    localStorage.setItem('party', JSON.stringify(momentum));
+                    localStorage.setItem('1', JSON.stringify(dk));
+                    localStorage.setItem('2', JSON.stringify(mszp));
+                    localStorage.setItem('3', JSON.stringify(lmp));
+                    localStorage.setItem('4', JSON.stringify(jobbik));
+                    localStorage.setItem('5', JSON.stringify(fidesz_kdnp));
+                    localStorage.setItem('6', JSON.stringify(pm));
+                    localStorage.setItem('7', JSON.stringify(egyutt));
+                    window.location.href = 'gameScreen.html';
+                });
+    
+                btnMszpChoose.addEventListener('click', event => {
+                    localStorage.setItem('party', JSON.stringify(mszp));
+                    localStorage.setItem('1', JSON.stringify(dk));
+                    localStorage.setItem('2', JSON.stringify(fidesz_kdnp));
+                    localStorage.setItem('3', JSON.stringify(lmp));
+                    localStorage.setItem('4', JSON.stringify(jobbik));
+                    localStorage.setItem('5', JSON.stringify(momentum));
+                    localStorage.setItem('6', JSON.stringify(pm));
+                    localStorage.setItem('7', JSON.stringify(egyutt));
+                    window.location.href = 'gameScreen.html';
+                });
+    
+                btnLmpChoose.addEventListener('click', event => {
+                    localStorage.setItem('party', JSON.stringify(lmp));
+                    localStorage.setItem('1', JSON.stringify(dk));
+                    localStorage.setItem('2', JSON.stringify(mszp));
+                    localStorage.setItem('3', JSON.stringify(fidesz_kdnp));
+                    localStorage.setItem('4', JSON.stringify(jobbik));
+                    localStorage.setItem('5', JSON.stringify(momentum));
+                    localStorage.setItem('6', JSON.stringify(pm));
+                    localStorage.setItem('7', JSON.stringify(egyutt));
+                    window.location.href = 'gameScreen.html';
+                });
+    
+            </script>
+        </div>
+    </body>
+</html>
