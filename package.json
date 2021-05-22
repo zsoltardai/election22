@@ -8,7 +8,7 @@
     "start": "electron ."
   },
   "devDependencies": {
-    "electron": "^11.3.0",
+    "electron": "^11.4.7",
     "electron-wix-msi": "^3.0.6"
   }
 }
