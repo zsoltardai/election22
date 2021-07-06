@@ -11,8 +11,8 @@ function createWindow () {
     frame: false,
     icon: 'img/icon.png',
     webPreferences: {
-      nodeIntegration: true,
-      enableRemoteModule: true
+        nodeIntegration: true,
+        contextIsolation: false,
     }
   })
 
